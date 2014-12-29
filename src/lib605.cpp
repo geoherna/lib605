@@ -1,5 +1,13 @@
 /*
 	lib605.cpp - Library implementation
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
 */
 #include "./include/lib605.hpp"
 
@@ -67,13 +75,13 @@ namespace lib605 {
 		tcgetattr(this->devhndl, &options);
 
 		options.c_cflag = CS8 | CREAD | CLOCAL;
-	    options.c_oflag = 0;
+		options.c_oflag = 0;
 		options.c_iflag = 0;
 
-	    cfsetispeed(&options, B9600);
-	    cfsetospeed(&options, B9600);
+		cfsetispeed(&options, B9600);
+		cfsetospeed(&options, B9600);
 
-	    tcsetattr(this->devhndl, TCSANOW, &options);
+		tcsetattr(this->devhndl, TCSANOW, &options);
 
 		return (this->MSRConected = true);
 	}
@@ -210,13 +218,45 @@ namespace lib605 {
 	}
 
 	std::string MSR::GetModel(void) {
+		if(!this->MSRConected) {
+			std::cout << "[*] Error: unable to get model from non-connected device" << std::endl;
+			return "ERROR";
+		}
 		char* model = new char[3];
 		this->WriteAutoSize(MSR_REQ_MODEL);
-		return "";
+		if(this->ReadBytes(model, 3) != 3) {
+			std::cout << "[*] Error: unable to read model number, expected 3 bytes" << std::endl;
+			return "ERROR";
+		}
+		if((memcmp((char*)model[0], MSR_ESC, 1) == 0) && model[2] == 'S') {
+			model[0] = model[1];
+			model[1] = '\0';
+			std::string mdl(model);
+			delete[] model;
+			return mdl;
+		}
+		return "ERROR";
 	}
 
 	std::string MSR::GetFirmwareVersion(void) {
-		return "";
+		if(!this->MSRConected) {
+			std::cout << "[*] Error: unable to get firmware version from non-connected device" << std::endl;
+			return "ERROR";
+		}
+		char* version = new char[9];
+		this->WriteAutoSize(MSR_REQ_FIRM_VER);
+		if(this->ReadBytes(version, 9) == 9) {
+			std::cout << "[*] Error: unable to get firmware version" << std::endl;
+			return "ERROR";
+		}
+		if(memcmp((char*)version[0], MSR_ESC, 1) == 0) {
+			version[8] = '\0';
+			memmove(version, version+1, strlen(version));
+			std::string ver(version);
+			delete[] version;
+			return ver;
+		}
+		return "ERROR";
 	}
 
 
@@ -230,15 +270,15 @@ namespace lib605 {
 			return -1;
 		}
 		int temp = 0;
-    	int count;
+		int count;
 
-    	if(buffer == NULL) return -1;
+		if(buffer == NULL) return -1;
 
-    	while(temp != len) {
-        	count = read(this->devhndl, (buffer + temp), (len - temp));
-        	if(count < 0) return -1;
-        	if(count > 0) temp += count;
-    	}
+		while(temp != len) {
+			count = read(this->devhndl, (buffer + temp), (len - temp));
+			if(count < 0) return -1;
+			if(count > 0) temp += count;
+		}
     	return count;
 	}
 
