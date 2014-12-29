@@ -10,6 +10,7 @@
 	SOFTWARE.
 */
 #pragma once
+#include <ostream>
 #include <iostream>
 #include <string>
 
@@ -19,8 +20,18 @@
 
 // Control Code
 #define MSR_ESC 		"\x1B"
-#define MSR_OK			MSR_ESC "\x30"
+
+// Status byte values
+#define MSR_G_OK		"\x30"
+#define MSR_RW_ERROR	"\x31"
+#define MSR_CFMT_ERROR	"\x32"
+#define MSR_INVALID_CMD	"\x34"
+#define MSR_INVALID_SWP "\x39"
+
+// OK and FAIL values
+#define MSR_OK			MSR_ESC MSR_G_OK
 #define MSR_FAIL		MSR_ESC	"\x41"
+
 
 // Response: NONE
 #define MSR_RESET 			MSR_ESC "\x61"
@@ -93,6 +104,59 @@
 #define MSR_GET_CO_STAT		MST_ESC "\x64"
 
 namespace lib605 {
+
+	class Track {
+		public:
+			enum TRACK_BIT_LEN {
+				TRACK_5_BIT,
+				TRACK_7_BIT,
+				TRACK_8_BIT
+			};
+		private:
+			unsigned char* TrackData;
+			int TrackDataLength;
+			TRACK_BIT_LEN TrackBitLength;
+		public:
+			Track(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len);
+			~Track(void);
+
+			unsigned char* GetTrackData(void);
+			int GetTrackDataLength(void);
+			TRACK_BIT_LEN GetTrackBitLength(void);
+
+			friend std::ostream& operator<< (std::ostream &out, Track &sTrack);
+	};
+
+	class Magstripe {
+		public:
+			enum CARD_DATA_FORMAT {
+				RAW,
+				ISO
+			};
+		private:
+			Track* Track1;
+			Track* Track2;
+			Track* Track3;
+			CARD_DATA_FORMAT Format;
+
+			Track* CreateTrack(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len);
+		public:
+			Magstripe(CARD_DATA_FORMAT Format);
+			~Magstripe(void);
+
+			Track* GetTrack1(void);
+			Track* GetTrack2(void);
+			Track* GetTrack3(void);
+
+			void SetTrack1(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len);
+			void SetTrack2(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len);
+			void SetTrack3(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len);
+
+			CARD_DATA_FORMAT GetCardDataFormat(void);
+
+			friend std::ostream& operator<< (std::ostream &out, Magstripe &sMagstripe);
+	};
+
 	class MSR {
 		public:
 			enum MSR_LED {

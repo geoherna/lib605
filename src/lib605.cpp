@@ -31,6 +31,140 @@
 
 namespace lib605 {
 
+/*	====	  START Track CLASS			====	*/
+
+	Track::Track(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len) {
+		this->TrackData = data;
+		this->TrackDataLength = data_len;
+		this->TrackBitLength = bit_len;
+	}
+
+	Track::~Track(void) {
+
+	}
+
+	unsigned char* Track::GetTrackData(void) {
+		return this->TrackData;
+	}
+
+	int Track::GetTrackDataLength(void) {
+		return this->TrackDataLength;
+	}
+
+	Track::TRACK_BIT_LEN Track::GetTrackBitLength(void) {
+		return this->TrackBitLength;
+	}
+
+	std::ostream& operator<< (std::ostream &out, Track &sTrack) {
+		out << "Track bit length: ";
+		switch(sTrack.GetTrackBitLength()) {
+			case Track::TRACK_5_BIT: {
+				out << "5" << std::endl;
+				break;
+			} case Track::TRACK_7_BIT: {
+				out << "7" << std::endl;
+				break;
+			} case Track::TRACK_8_BIT: {
+				out << "8" << std::endl;
+				break;
+			} default: break;
+		}
+		out << "Data length: " << sTrack.GetTrackDataLength();
+		return out;
+	}
+
+/*	====	START Magstripe CLASS		====	*/
+
+	Track* Magstripe::CreateTrack(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len) {
+		return new Track(data, data_len, bit_len);
+	}
+
+	Magstripe::Magstripe(Magstripe::CARD_DATA_FORMAT Format) {
+		this->Format = Format;
+	}
+
+	Magstripe::~Magstripe(void) {
+		// Clean up the tracks
+		delete this->Track1;
+		delete this->Track2;
+		delete this->Track3;
+	}
+
+	Track* Magstripe::GetTrack1(void) {
+		return this->Track1;
+	}
+
+	Track* Magstripe::GetTrack2(void) {
+		return this->Track2;
+	}
+
+	Track* Magstripe::GetTrack3(void) {
+		return this->Track3;
+	}
+
+	void Magstripe::SetTrack1(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len) {
+		this->Track1 = this->CreateTrack(data, data_len, bit_len);
+	}
+
+	void Magstripe::SetTrack2(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len) {
+		this->Track2 = this->CreateTrack(data, data_len, bit_len);
+	}
+
+	void Magstripe::SetTrack3(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len) {
+		this->Track3 = this->CreateTrack(data, data_len, bit_len);
+	}
+
+	Magstripe::CARD_DATA_FORMAT Magstripe::GetCardDataFormat(void) {
+		return this->Format;
+	}
+
+	std::ostream& operator<< (std::ostream &out, Magstripe &sMagstripe) {
+		out << "Card Format: ";
+		switch(sMagstripe.GetCardDataFormat()) {
+			case Magstripe::ISO: {
+				out << "ISO" << std::endl;
+				break;
+			} case Magstripe::RAW: {
+				out << "Raw" << std::endl;
+				break;
+			} default: break;
+		}
+
+		Track* t = sMagstripe.GetTrack1();
+		if(t->GetTrackDataLength() != 0) {
+			out << "\t" << (*t);
+			if(sMagstripe.Format == Magstripe::RAW)
+				out << "\t Track Data: " << std::hex << t->GetTrackData() << std::endl;
+			else
+				out << "\t Track Data:" << t->GetTrackData() << std::endl;
+		} else {
+			out << "Track 1: EMPTY" << std::endl;
+		}
+		t = sMagstripe.GetTrack2();
+		if(t->GetTrackDataLength() != 0) {
+			out << "\t" << (*t);
+			if(sMagstripe.Format == Magstripe::RAW)
+				out << "\t Track Data: " << std::hex << t->GetTrackData() << std::endl;
+			else
+				out << "\t Track Data:" << t->GetTrackData() << std::endl;
+		} else {
+			out << "Track 2: EMPTY" << std::endl;
+		}
+		t = sMagstripe.GetTrack3();
+		if(t->GetTrackDataLength() != 0) {
+			out << "\t" << (*t);
+			if(sMagstripe.Format == Magstripe::RAW)
+				out << "\t Track Data: " << std::hex << t->GetTrackData() << std::endl;
+			else
+				out << "\t Track Data:" << t->GetTrackData() << std::endl;
+		} else {
+			out << "Track 3: EMPTY" << std::endl;
+		}
+		return out;
+	}
+
+/*	====		START MSR CLASS 		====	*/
+
 	void MSR::CycleLED(void) noexcept {
 		this->SetLED(MSR::MSR_LED::LED_RED);
 		std::this_thread::sleep_for(std::chrono::milliseconds(1500));
