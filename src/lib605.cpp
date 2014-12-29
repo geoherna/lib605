@@ -429,4 +429,124 @@ namespace lib605 {
 		count = write(this->devhndl, buffer, len);
 		return count;
 	}
+
+	bool MSR::SetBPC(char Track1, char Track2, char Track3) {
+		char resp[5];
+		char expt[5];
+		char bpc_data[5];
+
+		memcpy(bpc_data, (void*)MSR_SET_BPC, 2);
+		memcpy(&bpc_data[2], (void*)&Track1, 1);
+		memcpy(&bpc_data[3], (void*)&Track2, 1);
+		memcpy(&bpc_data[4], (void*)&Track3, 1);
+
+		memcpy(bpc_data, expt, 5);
+		memcpy(&expt[0], MSR_OK, 2);
+
+		this->WriteBytes(bpc_data, 5);
+		if(this->ReadBytes(resp, 5) != 5) {
+			std::cout << "[*] Error: Unable to set BPC, expected 5 bytes" << std::endl;
+			return false;
+		}
+
+		if(memcmp(resp, expt, 5) != 0) {
+			std::cout << "[*] Error: Unable to set BPC, unexpected response" << std::endl;
+			return false;
+		}
+
+		return true;
+
+	}
+
+	bool MSR::SetBPI(int track, Track::TRACK_BPI TrackBPI) {
+		char resp[2];
+		switch(track) {
+			case 1: {
+				switch(TrackBPI){
+					case Track::BPI_210: {
+						this->WriteAutoSize(MSR_SB_TRACK1_210);
+						break;
+					} case Track::BPI_75: {
+						this->WriteAutoSize(MSR_SB_TRACK1_75);
+						break;
+					} default: break;
+				}
+				break;
+			} case 2: {
+				switch(TrackBPI){
+					case Track::BPI_210: {
+						this->WriteAutoSize(MSR_SB_TRACK2_210);
+						break;
+					} case Track::BPI_75: {
+						this->WriteAutoSize(MSR_SB_TRACK2_75);
+						break;
+					} default: break;
+				}
+				break;
+			} case 3: {
+				switch(TrackBPI){
+					case Track::BPI_210: {
+						this->WriteAutoSize(MSR_SB_TRACK3_210);
+						break;
+					} case Track::BPI_75: {
+						this->WriteAutoSize(MSR_SB_TRACK3_75);
+						break;
+					} default: break;
+				}
+				break;
+			} default: break;
+		}
+		// Check Response
+		if(this->ReadBytes((char*)&resp, 2) != 2) {
+			std::cout << "[*] Set BPI failed, expected back 2 bytes" << std::endl;
+			return false;
+		}
+		if(memcmp(resp, MSR_OK, 2) == 0) {
+			return true;
+		}else if (memcmp(resp, MSR_FAIL, 2) == 0) {
+			std::cout << "[*] Set BPI failed, got MSR_FAIL" << std::endl;
+			return false;
+		} else {
+			std::cout << "[*] Set BPI failed, expected MSR_OK or MSR_FAIL, got other" << std::endl;
+			return false;
+		}
+		return false;
+	}
+
+	bool MSR::SetCo(CO co) {
+		char resp[2];
+		switch(co) {
+			case HI_CO: {
+				this->WriteAutoSize(MSR_SET_HI_CO);
+				break;
+			} case LO_CO: {
+				this->WriteAutoSize(MSR_SET_LO_CO);
+				break;
+			} default: break;
+		}
+		if(this->ReadBytes(resp, 2) != 2) {
+			std::cout << "[*] Error: Unable to set CO, expected 2 bytes" << std::endl;
+			return false;
+		}
+		if(memcmp(resp, MSR_OK, 2) == 0) {
+			return true;
+		}
+		return false;
+	}
+
+	MSR::CO MSR::GetCo(void) {
+		char resp[2];
+		this->WriteAutoSize(MSR_GET_CO_STAT);
+		if(this->ReadBytes(resp, 2) != 2) {
+			std::cout << "[*] Error: Unable to get CO, expected 2 bytes" << std::endl;
+			return MSR::CO::ERR;
+		}
+		if(memcmp(resp, MSR_ESC "H", 2) == 0) {
+			return MSR::CO::HI_CO;
+		} else if(memcmp(resp, MSR_ESC "L", 2) == 0) {
+			return MSR::CO::LO_CO;
+		} else {
+			std::cout << "[*] Error: Unable to get CO, unexpected value" << std::endl;
+		}
+	}
 }

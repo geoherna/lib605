@@ -80,11 +80,11 @@
 #define MSR_SET_BPI			MSR_ESC "\x62"
 // Sub commands per track.
 #define MSR_SB_TRACK1_210	MSR_SET_BPI "\xA1"
-#define MSR_SB_TRACK1_72	MSR_SET_BPI "\xA0"
+#define MSR_SB_TRACK1_75	MSR_SET_BPI "\xA0"
 #define MSR_SB_TRACK2_210	MSR_SET_BPI "\xD2"
-#define MSR_SB_TRACK2_72	MSR_SET_BPI "\x4B"
+#define MSR_SB_TRACK2_75	MSR_SET_BPI "\x4B"
 #define MSR_SB_TRACK3_210	MSR_SET_BPI "\xC1"
-#define MSR_SB_TRACK3_72	MSR_SET_BPI "\xC0"
+#define MSR_SB_TRACK3_75	MSR_SET_BPI "\xC0"
 // Response: [RAW_DATA] MSR_ESC [STATUS]
 #define MSR_RAW_READ		MSR_ESC "\x6D"
 // Response: MSR_ESC [STATUS]
@@ -101,7 +101,7 @@
 // Response: MSR_ESC 0
 #define MSR_SET_LO_CO		MSR_ESC "\x79"
 // Response: MSR_ESC H/L
-#define MSR_GET_CO_STAT		MST_ESC "\x64"
+#define MSR_GET_CO_STAT		MSR_ESC "\x64"
 
 namespace lib605 {
 
@@ -111,6 +111,10 @@ namespace lib605 {
 				TRACK_5_BIT,
 				TRACK_7_BIT,
 				TRACK_8_BIT
+			};
+			enum TRACK_BPI {
+				BPI_210,
+				BPI_75
 			};
 		private:
 			unsigned char* TrackData;
@@ -166,6 +170,11 @@ namespace lib605 {
 				LED_ALL,
 				LED_OFF
 			};
+			enum CO {
+				HI_CO,
+				LO_CO,
+				ERR
+			};
 		private:
 			int devhndl;
 			bool MSRConected;
@@ -202,5 +211,13 @@ namespace lib605 {
 			int ReadBytes(char* buffer, int len);
 			int WriteAutoSize(char* buffer);
 			int WriteBytes(char* buffer, int len);
+
+			bool SetBPC(char Track1, char Track2, char Track3);
+			bool SetBPI(int track, Track::TRACK_BPI TrackBPI);
+
+			bool SetCo(CO co);
+			CO GetCo(void);
+
+
 	};
 }
