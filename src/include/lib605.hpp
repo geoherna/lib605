@@ -13,6 +13,7 @@
 #include <ostream>
 #include <iostream>
 #include <string>
+#include <tuple>
 
 #define BAUDRATE 9600
 
@@ -69,13 +70,13 @@
 // Response: MSR_ESC 0 (If erase succeeded) MSR_ESC A on fail
 #define MSR_ERASE_CARD		MSR_ESC "\x6C"
 // Track constants
-#define MSR_EC_TRACK1		0b00000000
-#define MSR_EC_TRACK2		0b00000010
-#define MSR_EC_TRACK3		0b00000100
-#define MSR_EC_TRACK1_2		MSR_EC_TRACK1 | MSR_EC_TRACK2
-#define MSR_EC_TRACK1_3		MSR_EC_TRACK1 | MSR_EC_TRACK3
-#define MSR_EC_TRACK2_3		MSR_EC_TRACK2 | MSR_EC_TRACK3
-#define MSR_EC_TRACK1_2_3	MSR_EC_TRACK1 | MSR_EC_TRACK2 | MSR_EC_TRACK3
+#define MSR_EC_TRACK1		"\x00"
+#define MSR_EC_TRACK2		"\x02"
+#define MSR_EC_TRACK3		"\x04"
+#define MSR_EC_TRACK1_2		"\x03"
+#define MSR_EC_TRACK1_3		"\x05"
+#define MSR_EC_TRACK2_3		"\x06"
+#define MSR_EC_TRACK1_2_3	"\x07"
 // Response: MSR_OK (If set succeeded) MSR_FAIL on fail
 #define MSR_SET_BPI			MSR_ESC "\x62"
 // Sub commands per track.
@@ -175,6 +176,15 @@ namespace lib605 {
 				LO_CO,
 				ERR
 			};
+			enum TRACK {
+				TRACK_1,
+				TRACK_2,
+				TRACK_3,
+				TRACK_1_2,
+				TRACK_1_3,
+				TRACK_2_3,
+				TRACK_1_2_3
+			};
 		private:
 			int devhndl;
 			bool MSRConected;
@@ -218,6 +228,10 @@ namespace lib605 {
 			bool SetCo(CO co);
 			CO GetCo(void);
 
+			bool SetLeadingZero(unsigned char Track1_3, unsigned char Track2);
+			std::tuple<unsigned char, unsigned char> GetLeadZero(void);
 
+			// CALL A RESET AFTER USING!!!!
+			bool EraseCard(TRACK track);
 	};
 }

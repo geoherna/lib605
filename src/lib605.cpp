@@ -250,6 +250,10 @@ namespace lib605 {
 	}
 
 	bool MSR::TestCommunication(void) {
+		if(!this->MSRConected) {
+			std::cout << "[*] Unable to test, not connect to device" << std::endl;
+			return false;
+		}
 #if defined(DEBUG)
 		std::cout << "[*] Performing communication test" << std::end;
 #endif
@@ -267,6 +271,10 @@ namespace lib605 {
 	}
 
 	bool MSR::TestSensor(void) {
+		if(!this->MSRConected) {
+			std::cout << "[*] Unable to test, not connect to device" << std::endl;
+			return false;
+		}
 #if defined(DEBUG)
 		std::cout << "[*] Performing sensor test" << std::end;
 #endif
@@ -285,6 +293,10 @@ namespace lib605 {
 		return true;
 	}
 	bool MSR::TestRAM(void) {
+		if(!this->MSRConected) {
+			std::cout << "[*] Unable to test, not connect to device" << std::endl;
+			return false;
+		}
 #if defined(DEBUG)
 		std::cout << "[*] Performing RAM test" << std::end;
 #endif
@@ -343,6 +355,10 @@ namespace lib605 {
 	}
 
 	void MSR::Disconnect(void) {
+		if(!this->MSRConected) {
+			std::cout << "[*] Unable to disconnect, not connect to device" << std::endl;
+			return;
+		}
 #if defined(DEBUG)
 		std::cout << "[*] Disconnecting from device" << std::end;
 #endif
@@ -431,6 +447,10 @@ namespace lib605 {
 	}
 
 	bool MSR::SetBPC(char Track1, char Track2, char Track3) {
+		if(!this->MSRConected) {
+			std::cout << "[*] Unable to set BPC, not connect to device" << std::endl;
+			return false;
+		}
 		char resp[5];
 		char expt[5];
 		char bpc_data[5];
@@ -459,6 +479,10 @@ namespace lib605 {
 	}
 
 	bool MSR::SetBPI(int track, Track::TRACK_BPI TrackBPI) {
+		if(!this->MSRConected) {
+			std::cout << "[*] Unable to set BPI, not connect to device" << std::endl;
+			return false;
+		}
 		char resp[2];
 		switch(track) {
 			case 1: {
@@ -514,6 +538,10 @@ namespace lib605 {
 	}
 
 	bool MSR::SetCo(CO co) {
+		if(!this->MSRConected) {
+			std::cout << "[*] Unable to set CO, not connect to device" << std::endl;
+			return false;
+		}
 		char resp[2];
 		switch(co) {
 			case HI_CO: {
@@ -535,6 +563,10 @@ namespace lib605 {
 	}
 
 	MSR::CO MSR::GetCo(void) {
+		if(!this->MSRConected) {
+			std::cout << "[*] Unable to get CO, not connect to device" << std::endl;
+			return MSR::CO::ERR;
+		}
 		char resp[2];
 		this->WriteAutoSize(MSR_GET_CO_STAT);
 		if(this->ReadBytes(resp, 2) != 2) {
@@ -547,6 +579,89 @@ namespace lib605 {
 			return MSR::CO::LO_CO;
 		} else {
 			std::cout << "[*] Error: Unable to get CO, unexpected value" << std::endl;
+			return MSR::CO::ERR;
 		}
+	}
+
+	bool MSR::SetLeadingZero(unsigned char Track1_3, unsigned char Track2) {
+		if(!this->MSRConected) {
+			std::cout << "[*] Unable to Set leading zero, not connect to device" << std::endl;
+			return false;
+		}
+		char resp[2];
+		char zero_dat[4];
+
+		memcpy(zero_dat, (void*)MSR_SET_LEAD_ZERO, 2);
+		memcpy(&zero_dat[2], (void*)&Track1_3, 1);
+		memcpy(&zero_dat[3], (void*)&Track2, 1);
+
+		this->WriteBytes(zero_dat, 4);
+		if(this->ReadBytes(resp, 2) != 2) {
+			std::cout << "[*] Error: Unable to set leading zero, expected 2 bytes" << std::endl;
+			return false;
+		}
+		if(memcmp(resp, MSR_OK, 2) == 0) {
+			return true;
+		}
+		return false;
+	}
+
+	std::tuple<unsigned char, unsigned char> MSR::GetLeadZero(void) {
+		if(!this->MSRConected) {
+			std::cout << "[*] Unable to get leading zero, not connect to device" << std::endl;
+			return std::make_tuple(0x00, 0x00);
+		}
+		char resp[3];
+		this->WriteAutoSize(MSR_CHECK_LEAD_ZERO);
+		if(this->ReadBytes(resp, 3) != 3) {
+			std::cout << "[*] Unable to get leading zero, expected 3 bytes" << std::endl;
+			return std::make_tuple(0x00, 0x00);
+		}
+		return std::make_tuple(resp[1], resp[2]);
+	}
+
+	// CALL A RESET AFTER USING!!!!
+	bool MSR::EraseCard(MSR::TRACK track) {
+		if(!this->MSRConected) {
+			std::cout << "[*] Unable to set erase mode, not connect to device" << std::endl;
+			return false;
+		}
+		char resp[2];
+		char erase_dat[3];
+
+		memcpy(erase_dat, MSR_ERASE_CARD, 2);
+		switch(track) {
+			case MSR::TRACK::TRACK_1: {
+				memcpy(&erase_dat[2], MSR_EC_TRACK1, 1);
+				break;
+			} case MSR::TRACK::TRACK_2: {
+				memcpy(&erase_dat[2], MSR_EC_TRACK2, 1);
+				break;
+			} case MSR::TRACK::TRACK_3: {
+				memcpy(&erase_dat[2], MSR_EC_TRACK3, 1);
+				break;
+			} case MSR::TRACK::TRACK_1_2: {
+				memcpy(&erase_dat[2], MSR_EC_TRACK1_2, 1);
+				break;
+			} case MSR::TRACK::TRACK_1_3: {
+				memcpy(&erase_dat[2], MSR_EC_TRACK1_3, 1);
+				break;
+			} case MSR::TRACK::TRACK_2_3: {
+				memcpy(&erase_dat[2], MSR_EC_TRACK2_3, 1);
+				break;
+			} case MSR::TRACK::TRACK_1_2_3: {
+				memcpy(&erase_dat[2], MSR_EC_TRACK1_2_3, 1);
+				break;
+			} default: break;
+		}
+		this->WriteBytes(erase_dat, 3);
+		if(this->ReadBytes(resp, 2) != 2) {
+			std::cout << "[*] Error: Unable to set erase, expected 2 bytes" << std::endl;
+			return false;
+		}
+		if(memcmp(resp, MSR_OK, 2) == 0) {
+			return true;
+		}
+		return false;
 	}
 }
