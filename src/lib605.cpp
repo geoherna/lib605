@@ -664,4 +664,16 @@ namespace lib605 {
 		}
 		return false;
 	}
+	Magstripe MSR::ReadCard(Magstripe::CARD_DATA_FORMAT Format) {
+		Magstripe ms(Format);
+	}
+
+	bool MSR::ReadISOTrackData(unsigned char* buffer, int buffer_size, Track::TRACK_BIT_LEN trackFmt) {
+
+	}
+
+	bool MSR::ReadRAWTrackData(unsigned char* buffer, int buffer_size, Track::TRACK_BIT_LEN trackFmt) {
+
+	}
+
 }

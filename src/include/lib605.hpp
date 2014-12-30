@@ -233,5 +233,10 @@ namespace lib605 {
 
 			// CALL A RESET AFTER USING!!!!
 			bool EraseCard(TRACK track);
+
+			Magstripe ReadCard(Magstripe::CARD_DATA_FORMAT Format);
+
+			bool ReadISOTrackData(unsigned char* buffer, int buffer_size, Track::TRACK_BIT_LEN trackFmt);
+			bool ReadRAWTrackData(unsigned char* buffer, int buffer_size, Track::TRACK_BIT_LEN trackFmt);
 	};
 }
