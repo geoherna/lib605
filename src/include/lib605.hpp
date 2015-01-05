@@ -9,13 +9,17 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 	SOFTWARE.
 */
+
 #pragma once
 #include <ostream>
 #include <iostream>
 #include <string>
 #include <tuple>
 
-#define BAUDRATE 9600
+// Allows one to redefine the default device at compile time
+#if !defined(DEFAULT_DEV)
+#define DEFAULT_DEV "/dev/ttyUSB0"
+#endif
 
 // Protocol defines
 
@@ -106,64 +110,87 @@
 
 namespace lib605 {
 
+	//	Class for storing track data
 	class Track {
 		public:
+			// Bits per character of this track
 			enum TRACK_BIT_LEN {
 				TRACK_5_BIT,
 				TRACK_7_BIT,
 				TRACK_8_BIT
 			};
+			// Bits per inch of the track
 			enum TRACK_BPI {
 				BPI_210,
 				BPI_75
 			};
 		private:
+			// Raw track data
 			unsigned char* TrackData;
+			// size of data
 			int TrackDataLength;
+			// Track BPC
 			TRACK_BIT_LEN TrackBitLength;
 		public:
+			// Track constructor
 			Track(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len);
+			// Destructor
 			~Track(void);
 
+			// Returns the raw track data
 			unsigned char* GetTrackData(void);
+			// Returns the size of the data
 			int GetTrackDataLength(void);
+			// Returns the track BPC
 			TRACK_BIT_LEN GetTrackBitLength(void);
 
+			// Allows human-readable output of data
 			friend std::ostream& operator<< (std::ostream &out, Track &sTrack);
 	};
 
+	// Magstripe data class
 	class Magstripe {
 		public:
+			// Format of the card data contained herein
 			enum CARD_DATA_FORMAT {
 				RAW,
 				ISO
 			};
 		private:
+			// Tracks
 			Track* Track1;
 			Track* Track2;
 			Track* Track3;
 			CARD_DATA_FORMAT Format;
-
+			// Creates a track from the given buffer (Might move into Track class)
 			Track* CreateTrack(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len);
 		public:
+			// Constructor
 			Magstripe(CARD_DATA_FORMAT Format);
+			// Destructor
 			~Magstripe(void);
 
+			// Gets each track object
 			Track* GetTrack1(void);
 			Track* GetTrack2(void);
 			Track* GetTrack3(void);
 
+			// Sets each track object
 			void SetTrack1(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len);
 			void SetTrack2(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len);
 			void SetTrack3(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len);
 
+			// Returns the card format
 			CARD_DATA_FORMAT GetCardDataFormat(void);
 
+			// Outputs a nice human-readable representation of the Magstripe data
 			friend std::ostream& operator<< (std::ostream &out, Magstripe &sMagstripe);
 	};
 
+	// Main class for interacting with the MSR device
 	class MSR {
 		public:
+			// LED Control
 			enum MSR_LED {
 				LED_GREEN,
 				LED_YELLOW,
@@ -171,11 +198,13 @@ namespace lib605 {
 				LED_ALL,
 				LED_OFF
 			};
-			enum CO {
+			// Coercivity Values
+			enum COERCIVITY {
 				HI_CO,
 				LO_CO,
 				ERR
 			};
+			// Track control enum
 			enum TRACK {
 				TRACK_1,
 				TRACK_2,
@@ -186,57 +215,90 @@ namespace lib605 {
 				TRACK_1_2_3
 			};
 		private:
+			// Device handle
 			int devhndl;
+			// Connection Status
 			bool MSRConected;
+			// Device path '/dev/ttyUSB0' by default
 			std::string Device;
 
+			//  Cycles the LEDs used in initialization step
 			void CycleLED(void) noexcept;
 
 		public:
+			// Construct a new MSR class
 			MSR(void) noexcept;
+			// Set a device
 			MSR(std::string Device) noexcept;
+			// Destructor
 			~MSR(void);
 
+			// Connect to the deice specified on class instantiation
 			bool Connect(void);
+			// Connect to given device
 			bool Connect(std::string Device);
 
+			// Initialize the MSR device
 			bool Initialize(void);
 
-
+			// Communication Self Test (Runs second)
 			bool TestCommunication(void);
+			// Sensor Self Test (Runs last)
 			bool TestSensor(void);
+			// RAM Self Test (Runs first)
 			bool TestRAM(void);
 
+			// Sends the reset code to the device
 			void SendReset(void);
 
+			// Sets the LED on the device
 			void SetLED(MSR_LED LED);
 
+			// Check the device connection
 			bool IsConnected(void);
+			// Disconnects from the device
 			void Disconnect(void);
 
+			// Gets the model number of the device
 			std::string GetModel(void);
+			// Gets the firmware version of the device
 			std::string GetFirmwareVersion(void);
 
+
+			// Attempts to estimate buffer size and read that many bytes from the device
 			int ReadAutoBytes(char* buffer);
+			// Reads an arbitrary number of bytes from the device
 			int ReadBytes(char* buffer, int len);
+			// Attempts to estimate the size of the write buffer and write to the device
 			int WriteAutoSize(char* buffer);
+			// Writes an arbitrary number of bytes to the device
 			int WriteBytes(char* buffer, int len);
 
+			// Set the bits per character on the device per tack
 			bool SetBPC(char Track1, char Track2, char Track3);
+			// Sets the bits per inch on the given track
 			bool SetBPI(int track, Track::TRACK_BPI TrackBPI);
 
-			bool SetCo(CO co);
-			CO GetCo(void);
+			// Sets the Coercivity of the device
+			bool SetCoercivity(COERCIVITY co);
+			// Returns the current Coercivity of the device
+			COERCIVITY GetCoercivity(void);
 
+			// Sets the leading zeros of the tracks on the device
 			bool SetLeadingZero(unsigned char Track1_3, unsigned char Track2);
+			// Gets the leading zeros of the device. Item one is tracks 1 and 3 item two is track 2
 			std::tuple<unsigned char, unsigned char> GetLeadZero(void);
 
-			// CALL A RESET AFTER USING!!!!
+			// Sets the device to erase the given track
+			// NOTE: CALL A RESET AFTER USING!!!!
 			bool EraseCard(TRACK track);
 
+			// Returns a magstripe object with card data in the given format
 			Magstripe ReadCard(Magstripe::CARD_DATA_FORMAT Format);
 
+			// Read a ISO Track into a buffer
 			bool ReadISOTrackData(unsigned char* buffer, int buffer_size, Track::TRACK_BIT_LEN trackFmt);
+			// Read raw track data into a buffer
 			bool ReadRAWTrackData(unsigned char* buffer, int buffer_size, Track::TRACK_BIT_LEN trackFmt);
 	};
 }

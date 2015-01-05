@@ -33,28 +33,34 @@ namespace lib605 {
 
 /*	====	  START Track CLASS			====	*/
 
+	// Track constructor
 	Track::Track(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len) {
+		// Set all of the class members
 		this->TrackData = data;
 		this->TrackDataLength = data_len;
 		this->TrackBitLength = bit_len;
 	}
 
 	Track::~Track(void) {
-
+		// Dont really do anything
 	}
 
+	// Return the raw track data
 	unsigned char* Track::GetTrackData(void) {
 		return this->TrackData;
 	}
 
+	// Return the length of the track data
 	int Track::GetTrackDataLength(void) {
 		return this->TrackDataLength;
 	}
 
+	// Returns the track BPC
 	Track::TRACK_BIT_LEN Track::GetTrackBitLength(void) {
 		return this->TrackBitLength;
 	}
 
+	// Fancy ostream output
 	std::ostream& operator<< (std::ostream &out, Track &sTrack) {
 		out << "Track bit length: ";
 		switch(sTrack.GetTrackBitLength()) {
@@ -75,14 +81,19 @@ namespace lib605 {
 
 /*	====	START Magstripe CLASS		====	*/
 
+	// Create a new track
+	// NOTE: Might remove
 	Track* Magstripe::CreateTrack(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len) {
 		return new Track(data, data_len, bit_len);
 	}
 
+	// Constructor
 	Magstripe::Magstripe(Magstripe::CARD_DATA_FORMAT Format) {
+		// Set class members
 		this->Format = Format;
 	}
 
+	// Destructor
 	Magstripe::~Magstripe(void) {
 		// Clean up the tracks
 		delete this->Track1;
@@ -90,6 +101,7 @@ namespace lib605 {
 		delete this->Track3;
 	}
 
+	// Gets the track object
 	Track* Magstripe::GetTrack1(void) {
 		return this->Track1;
 	}
@@ -102,6 +114,7 @@ namespace lib605 {
 		return this->Track3;
 	}
 
+	// Sets the track object
 	void Magstripe::SetTrack1(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len) {
 		this->Track1 = this->CreateTrack(data, data_len, bit_len);
 	}
@@ -114,10 +127,12 @@ namespace lib605 {
 		this->Track3 = this->CreateTrack(data, data_len, bit_len);
 	}
 
+	// Returns the card format
 	Magstripe::CARD_DATA_FORMAT Magstripe::GetCardDataFormat(void) {
 		return this->Format;
 	}
 
+	// Pretty output
 	std::ostream& operator<< (std::ostream &out, Magstripe &sMagstripe) {
 		out << "Card Format: ";
 		switch(sMagstripe.GetCardDataFormat()) {
@@ -165,6 +180,7 @@ namespace lib605 {
 
 /*	====		START MSR CLASS 		====	*/
 
+	// Cycles all the LEDs
 	void MSR::CycleLED(void) noexcept {
 		this->SetLED(MSR::MSR_LED::LED_RED);
 		std::this_thread::sleep_for(std::chrono::milliseconds(1500));
@@ -175,24 +191,33 @@ namespace lib605 {
 		this->SetLED(MSR::MSR_LED::LED_OFF);
 	}
 
+	// Constructor
 	MSR::MSR(void) noexcept {
 		// Set the initial state
 		this->MSRConected = false;
-		this->Device = "/dev/ttyUSB0";
+		// Give the default device
+		this->Device = DEFAULT_DEV;
 	}
+
+	// MSR class with the given device, allowing for multiple devices
 	MSR::MSR(std::string Device) noexcept {
 		// Do the same as above but the user gave us the device
 		this->MSRConected = false;
 		this->Device = Device;
 	}
 
+	// Destructor
 	MSR::~MSR(void) {
+		// Disconnect if we are connected
 		if(this->MSRConected) this->Disconnect();
 	}
 
+	// Connect to the device set in the constructor
 	bool MSR::Connect(void) {
 		return this->Connect(this->Device);
 	}
+
+	// Connect to the given device
 	bool MSR::Connect(std::string Device) {
 #if defined(DEBUG)
 		std::cout << "[*] Connecting to device '" << Device <<"'" << std::end;
@@ -203,7 +228,9 @@ namespace lib605 {
 		}
 		struct termios options;
 		if((this->devhndl = open(Device.c_str(), O_RDWR | O_NOCTTY)) < 0) {
+#if defined(DEBUG)
 			std::cout << "[*] Error opening device for use" << std::endl;
+#endif
 			return false;
 		}
 		tcgetattr(this->devhndl, &options);
@@ -222,7 +249,9 @@ namespace lib605 {
 
 	bool MSR::Initialize(void) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Unable to initialize, not connect to device" << std::endl;
+#endif
 			return false;
 		}
 #if defined(DEBUG)
@@ -251,7 +280,9 @@ namespace lib605 {
 
 	bool MSR::TestCommunication(void) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Unable to test, not connect to device" << std::endl;
+#endif
 			return false;
 		}
 #if defined(DEBUG)
@@ -260,11 +291,15 @@ namespace lib605 {
 		char resp[2];
 		this->WriteAutoSize(MSR_COM_TEST);
 		if(this->ReadBytes((char*)&resp, 2) != 2) {
+#if defined(DEBUG)
 			std::cout << "[*] Communication self test failed, expected back 2 bytes" << std::endl;
+#endif
 			return false;
 		}
 		if(memcmp(resp, (MSR_ESC "\x79"), 2) != 0) {
+#if defined(DEBUG)
 			std::cout << "[*] Communication self test failed, expected <ESC>\\x79 got other" << std::endl;
+#endif
 			return false;
 		}
 		return true;
@@ -272,7 +307,9 @@ namespace lib605 {
 
 	bool MSR::TestSensor(void) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Unable to test, not connect to device" << std::endl;
+#endif
 			return false;
 		}
 #if defined(DEBUG)
@@ -283,18 +320,24 @@ namespace lib605 {
 		// The device wont respond unless a reset is issued
 		this->SendReset();
 		if(this->ReadBytes((char*)&resp, 2) != 2) {
+#if defined(DEBUG)
 			std::cout << "[*] Sensor self test failed, expected back 2 bytes" << std::endl;
+#endif
 			return false;
 		}
 		if(memcmp(resp, MSR_OK, 2) != 0) {
+#if defined(DEBUG)
 			std::cout << "[*] Sensor self test failed, expected MSR_OK got something else" << std::endl;
+#endif
 			return false;
 		}
 		return true;
 	}
 	bool MSR::TestRAM(void) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Unable to test, not connect to device" << std::endl;
+#endif
 			return false;
 		}
 #if defined(DEBUG)
@@ -303,23 +346,31 @@ namespace lib605 {
 		char resp[2];
 		this->WriteAutoSize(MSR_RAM_TEST);
 		if(this->ReadBytes((char*)&resp, 2) != 2) {
+#if defined(DEBUG)
 			std::cout << "[*] Ram self test failed, expected back 2 bytes" << std::endl;
+#endif
 			return false;
 		}
 		if(memcmp(resp, MSR_OK, 2) == 0) {
 			return true;
 		}else if (memcmp(resp, MSR_FAIL, 2) == 0) {
+#if defined(DEBUG)
 			std::cout << "[*] RAM self test failed, got MSR_FAIL" << std::endl;
+#endif
 			return false;
 		} else {
+#if defined(DEBUG)
 			std::cout << "[*] RAM self test failed, expected MSR_OK or MSR_FAIL, got other" << std::endl;
+#endif
 			return false;
 		}
 	}
 
 	void MSR::SendReset(void) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Error: Unable to reset non-connected device" << std::endl;
+#endif
 			return;
 		}
 		this->WriteAutoSize(MSR_RESET);
@@ -327,7 +378,9 @@ namespace lib605 {
 
 	void MSR::SetLED(MSR_LED LED) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Error: Unable to reset non-connected device" << std::endl;
+#endif
 			return;
 		}
 		switch(LED) {
@@ -356,7 +409,9 @@ namespace lib605 {
 
 	void MSR::Disconnect(void) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Unable to disconnect, not connect to device" << std::endl;
+#endif
 			return;
 		}
 #if defined(DEBUG)
@@ -369,13 +424,17 @@ namespace lib605 {
 
 	std::string MSR::GetModel(void) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Error: unable to get model from non-connected device" << std::endl;
+#endif
 			return "ERROR";
 		}
 		char* model = new char[3];
 		this->WriteAutoSize(MSR_REQ_MODEL);
 		if(this->ReadBytes(model, 3) != 3) {
+#if defined(DEBUG)
 			std::cout << "[*] Error: unable to read model number, expected 3 bytes" << std::endl;
+#endif
 			return "ERROR";
 		}
 		if((memcmp((char*)model[0], MSR_ESC, 1) == 0) && model[2] == 'S') {
@@ -390,13 +449,17 @@ namespace lib605 {
 
 	std::string MSR::GetFirmwareVersion(void) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Error: unable to get firmware version from non-connected device" << std::endl;
+#endif
 			return "ERROR";
 		}
 		char* version = new char[9];
 		this->WriteAutoSize(MSR_REQ_FIRM_VER);
 		if(this->ReadBytes(version, 9) == 9) {
+#if defined(DEBUG)
 			std::cout << "[*] Error: unable to get firmware version" << std::endl;
+#endif
 			return "ERROR";
 		}
 		if(memcmp((char*)version[0], MSR_ESC, 1) == 0) {
@@ -416,7 +479,9 @@ namespace lib605 {
 
 	int MSR::ReadBytes(char* buffer, int len) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Error: unable to read from non-connected device" << std::endl;
+#endif
 			return -1;
 		}
 		int temp = 0;
@@ -438,7 +503,9 @@ namespace lib605 {
 
 	int MSR::WriteBytes(char* buffer, int len) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Error: unable to write to non-connected device" << std::endl;
+#endif
 			return -1;
 		}
 		int count = 0;
@@ -448,7 +515,9 @@ namespace lib605 {
 
 	bool MSR::SetBPC(char Track1, char Track2, char Track3) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Unable to set BPC, not connect to device" << std::endl;
+#endif
 			return false;
 		}
 		char resp[5];
@@ -465,12 +534,16 @@ namespace lib605 {
 
 		this->WriteBytes(bpc_data, 5);
 		if(this->ReadBytes(resp, 5) != 5) {
+#if defined(DEBUG)
 			std::cout << "[*] Error: Unable to set BPC, expected 5 bytes" << std::endl;
+#endif
 			return false;
 		}
 
 		if(memcmp(resp, expt, 5) != 0) {
+#if defined(DEBUG)
 			std::cout << "[*] Error: Unable to set BPC, unexpected response" << std::endl;
+#endif
 			return false;
 		}
 
@@ -480,7 +553,9 @@ namespace lib605 {
 
 	bool MSR::SetBPI(int track, Track::TRACK_BPI TrackBPI) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Unable to set BPI, not connect to device" << std::endl;
+#endif
 			return false;
 		}
 		char resp[2];
@@ -522,24 +597,32 @@ namespace lib605 {
 		}
 		// Check Response
 		if(this->ReadBytes((char*)&resp, 2) != 2) {
+#if defined(DEBUG)
 			std::cout << "[*] Set BPI failed, expected back 2 bytes" << std::endl;
+#endif
 			return false;
 		}
 		if(memcmp(resp, MSR_OK, 2) == 0) {
 			return true;
 		}else if (memcmp(resp, MSR_FAIL, 2) == 0) {
+#if defined(DEBUG)
 			std::cout << "[*] Set BPI failed, got MSR_FAIL" << std::endl;
+#endif
 			return false;
 		} else {
+#if defined(DEBUG)
 			std::cout << "[*] Set BPI failed, expected MSR_OK or MSR_FAIL, got other" << std::endl;
+#endif
 			return false;
 		}
 		return false;
 	}
 
-	bool MSR::SetCo(CO co) {
+	bool MSR::SetCoercivity(COERCIVITY co) {
 		if(!this->MSRConected) {
-			std::cout << "[*] Unable to set CO, not connect to device" << std::endl;
+#if defined(DEBUG)
+			std::cout << "[*] Unable to set Coercivity, not connect to device" << std::endl;
+#endif
 			return false;
 		}
 		char resp[2];
@@ -553,7 +636,9 @@ namespace lib605 {
 			} default: break;
 		}
 		if(this->ReadBytes(resp, 2) != 2) {
-			std::cout << "[*] Error: Unable to set CO, expected 2 bytes" << std::endl;
+#if defined(DEBUG)
+			std::cout << "[*] Error: Unable to set Coercivity, expected 2 bytes" << std::endl;
+#endif
 			return false;
 		}
 		if(memcmp(resp, MSR_OK, 2) == 0) {
@@ -562,30 +647,38 @@ namespace lib605 {
 		return false;
 	}
 
-	MSR::CO MSR::GetCo(void) {
+	MSR::COERCIVITY MSR::GetCoercivity(void) {
 		if(!this->MSRConected) {
-			std::cout << "[*] Unable to get CO, not connect to device" << std::endl;
-			return MSR::CO::ERR;
+#if defined(DEBUG)
+			std::cout << "[*] Unable to get Coercivity, not connect to device" << std::endl;
+#endif
+			return MSR::COERCIVITY::ERR;
 		}
 		char resp[2];
 		this->WriteAutoSize(MSR_GET_CO_STAT);
 		if(this->ReadBytes(resp, 2) != 2) {
-			std::cout << "[*] Error: Unable to get CO, expected 2 bytes" << std::endl;
-			return MSR::CO::ERR;
+#if defined(DEBUG)
+			std::cout << "[*] Error: Unable to get Coercivity, expected 2 bytes" << std::endl;
+#endif
+			return MSR::COERCIVITY::ERR;
 		}
 		if(memcmp(resp, MSR_ESC "H", 2) == 0) {
-			return MSR::CO::HI_CO;
+			return MSR::COERCIVITY::HI_CO;
 		} else if(memcmp(resp, MSR_ESC "L", 2) == 0) {
-			return MSR::CO::LO_CO;
+			return MSR::COERCIVITY::LO_CO;
 		} else {
-			std::cout << "[*] Error: Unable to get CO, unexpected value" << std::endl;
-			return MSR::CO::ERR;
+#if defined(DEBUG)
+			std::cout << "[*] Error: Unable to get Coercivity, unexpected value" << std::endl;
+#endif
+			return MSR::COERCIVITY::ERR;
 		}
 	}
 
 	bool MSR::SetLeadingZero(unsigned char Track1_3, unsigned char Track2) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Unable to Set leading zero, not connect to device" << std::endl;
+#endif
 			return false;
 		}
 		char resp[2];
@@ -597,7 +690,9 @@ namespace lib605 {
 
 		this->WriteBytes(zero_dat, 4);
 		if(this->ReadBytes(resp, 2) != 2) {
+#if defined(DEBUG)
 			std::cout << "[*] Error: Unable to set leading zero, expected 2 bytes" << std::endl;
+#endif
 			return false;
 		}
 		if(memcmp(resp, MSR_OK, 2) == 0) {
@@ -608,13 +703,17 @@ namespace lib605 {
 
 	std::tuple<unsigned char, unsigned char> MSR::GetLeadZero(void) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Unable to get leading zero, not connect to device" << std::endl;
+#endif
 			return std::make_tuple(0x00, 0x00);
 		}
 		char resp[3];
 		this->WriteAutoSize(MSR_CHECK_LEAD_ZERO);
 		if(this->ReadBytes(resp, 3) != 3) {
+#if defined(DEBUG)
 			std::cout << "[*] Unable to get leading zero, expected 3 bytes" << std::endl;
+#endif
 			return std::make_tuple(0x00, 0x00);
 		}
 		return std::make_tuple(resp[1], resp[2]);
@@ -623,7 +722,9 @@ namespace lib605 {
 	// CALL A RESET AFTER USING!!!!
 	bool MSR::EraseCard(MSR::TRACK track) {
 		if(!this->MSRConected) {
+#if defined(DEBUG)
 			std::cout << "[*] Unable to set erase mode, not connect to device" << std::endl;
+#endif
 			return false;
 		}
 		char resp[2];
@@ -656,7 +757,9 @@ namespace lib605 {
 		}
 		this->WriteBytes(erase_dat, 3);
 		if(this->ReadBytes(resp, 2) != 2) {
+#if defined(DEBUG)
 			std::cout << "[*] Error: Unable to set erase, expected 2 bytes" << std::endl;
+#endif
 			return false;
 		}
 		if(memcmp(resp, MSR_OK, 2) == 0) {
