@@ -1,0 +1,131 @@
+.TH LIB605 3 2015-01-05
+.SH NAME
+lib605 \- library for interaction with MSR605 and 606 Magstripe reader/writers
+.SH SYNOPSIS
+.B #include <lib605.hpp>
+.sp
+.BI "lib605::Track::TRACK_BIT_LEN {...};"
+.br
+.BI "lib605::Track::TRACK_BPI {...};"
+.br
+.BI "lib605::Track::Track(unsigned char* data, int data_len, lib605::Track::TRACK_BIT_LEN bit_len);"
+.br
+.BI "lib605::Track::~Track(void);"
+.br
+.BI "unsigned char* lib605::Track::GetTrackData(void);"
+.br
+.BI "int lib605::Track::GetTrackDataLength(void);"
+.br
+.BI "lib605::Track::TRACK_BIT_LEN lib605::Track::GetTrackBitLength(void);"
+.br
+.sp
+.BI "lib605::Magstripe::CARD_DATA_FORMAT {...};"
+.br
+.BI "lib605::Magstripe::Magstripe(lib605::Magstripe::CARD_DATA_FORMAT Format);"
+.br
+.BI "lib605::Magstripe::~Magstripe(void);"
+.br
+.BI "lib605::Track* lib605::Magstripe::GetTrack1(void);"
+.br
+.BI "lib605::Track* lib605::Magstripe::GetTrack2(void);"
+.br
+.BI "lib605::Track* lib605::Magstripe::GetTrack3(void);"
+.br
+.BI "void lib605::Magstripe::SetTrack1(unsigned char* data, int data_len, lib605::Track::TRACK_BIT_LEN bit_len);"
+.br
+.BI "void lib605::Magstripe::SetTrack2(unsigned char* data, int data_len, lib605::Track::TRACK_BIT_LEN bit_len);"
+.br
+.BI "void lib605::Magstripe::SetTrack3(unsigned char* data, int data_len, lib605::Track::TRACK_BIT_LEN bit_len);"
+.br
+.BI "lib605::Magstripe::CARD_DATA_FORMAT lib605::Magstripe::GetCardDataFormat(void);"
+.br
+.sp
+.BI "enum lib605::MSR::LED {...};"
+.br
+.BI "enum lib605::MSR::COERCIVITY {...};"
+.br
+.BI "enum lib605::MSR::TRACK {...};"
+.br
+.BI "lib605::MSR::MSR(void) noexcept;"
+.br
+.BI "lib605::MSR::MSR(std::string Device) noexcept;"
+.br
+.BI "lib605::MSR::~MSR(void);"
+.br
+.BI "bool lib605::MSR::Connect(void);"
+.br
+.BI "bool lib605::MSR::Connect(std::string Device);"
+.br
+.BI "bool lib605::MSR::Initialize(void);"
+.br
+.BI "bool lib605::MSR::TestCommunication(void);"
+.br
+.BI "bool lib605::MSR::TestSensor(void);"
+.br
+.BI "bool lib605::MSR::TestRAM(void);"
+.br
+.BI "void lib605::MSR::SendReset(void)"
+.br
+.BI "void lib605::MSR::SetLED(lib605::MSR::MSR_LED LED);"
+.br
+.BI "bool lib605::MSR::IsConnected(void);"
+.br
+.BI "void lib605::MSR::Disconnect(void);"
+.br
+.BI "std::string lib605::MSR::GetModel(void);"
+.br
+.BI "std::string lib605::MSR::GetFirmwareVersion(void);"
+.br
+.BI "int lib605::MSR::ReadAutoBytes(char* buffer);"
+.br
+.BI "int lib605::MSR::ReadBytes(char* buffer, int len);"
+.br
+.BI "int lib605::MSR::WriteAutoSize(char* buffer);"
+.br
+.BI "int lib605::MSR::WriteBytes(char* buffer, int len);"
+.br
+.BI "bool lib605::MSR::SetBPC(char Track1, char Track2, char Track3);"
+.br
+.BI "bool lib605::MSR::SetBPI(int track, lib605::Track::TRACK_BPI TrackBPI);"
+.br
+.BI "bool lib605::MSR::SetCoercivity(lib605::MSR::COERCIVITY co);"
+.br
+.BI "lib605::MSR::COERCIVITY lib605::MSR::GetCoercivity(void);"
+.br
+.BI "bool lib605::MSR::SetLeadingZero(unsigned char Track1_3, unsigned char Track2);"
+.br
+.BI "std::tuple<unsigned char, unsigned char> lib605::MSR::GetLeadZero(void);"
+.br
+.BI "bool lib605::MSR::EraseCard(lib605::MSR::TRACK track);"
+.br
+.BI "lib605::Magstripe lib605::MSR::ReadCard(lib605::Magstripe::CARD_DATA_FORMAT Format);"
+.br
+.BI "bool lib605::MSR::ReadISOTrackData(unsigned char* buffer, int buffer_size, lib605::Track::TRACK_BIT_LEN trackFmt);"
+.br
+.BI "bool lib605::MSR::ReadRAWTrackData(unsigned char* buffer, int buffer_size, lib605::Track::TRACK_BIT_LEN trackFmt);"
+.br
+.SH DESCRIPTION
+The functions in the
+.BR lib605
+library provide facilities to interact with the MSR605 and MSR606 Magnetic stripe reader-writers with an object oriented C++ API. All contained within the
+.BR lib605
+namespace it has three base classes,
+.BR lib605::Track
+,
+.BR lib605::Magstripe
+, and
+.BR lib605::MSR
+. Each provide functionality to allow
+.BR lib605
+to work.
+.sp
+The
+.BR lib605::Track
+class holds the track data that is read off the card or that is to be written to the card.
+.sp
+.BR lib605::Magstripe
+represents the contents of the card, include all three tracks as well as the type of data the magnetic stripe contains.
+.sp
+Finally
+.BR lib605::MSR
+contains all the logic and methods to interact with the device itself. Including setting modes and making LEDs flip on.
