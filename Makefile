@@ -10,17 +10,13 @@ CFLAGS = -I$(SRCDIR)/include -Wall -std=c++11 -D 'VERSION="$(VERSION)"'
 
 LDFLAGS = -fPIC -shared
 
-
-all: $(OUTPUT) docs
+all: $(OUTPUT)
 
 default: $(OUTPUT)
 
 $(OUTPUT):
 	$(CXX) $(CFLAGS) $(LDFLAGS) $(SRCDIR)/lib605.cpp -o $(OUTPUT)
-
-docs:
-	gzip -fq9k lib605.3
-
+demo:
+	$(CXX) $(SRCDIR)/demo.cpp $(CFLAGS) -L. -l605
 clean:
-	rm -f $(OUTPUT) lib605.3.gz
-
+	rm -f $(OUTPUT)

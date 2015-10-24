@@ -24,18 +24,18 @@
 // Protocol defines
 
 // Control Code
-#define MSR_ESC 		"\x1B"
+#define MSR_ESC 			"\x1B"
 
 // Status byte values
-#define MSR_G_OK		"\x30"
-#define MSR_RW_ERROR	"\x31"
-#define MSR_CFMT_ERROR	"\x32"
-#define MSR_INVALID_CMD	"\x34"
-#define MSR_INVALID_SWP "\x39"
+#define MSR_G_OK			"\x30"
+#define MSR_RW_ERROR		"\x31"
+#define MSR_CFMT_ERROR		"\x32"
+#define MSR_INVALID_CMD		"\x34"
+#define MSR_INVALID_SWP 	"\x39"
 
 // OK and FAIL values
-#define MSR_OK			MSR_ESC MSR_G_OK
-#define MSR_FAIL		MSR_ESC	"\x41"
+#define MSR_OK				MSR_ESC MSR_G_OK
+#define MSR_FAIL			MSR_ESC	"\x41"
 
 
 // Response: NONE
@@ -108,21 +108,31 @@
 // Response: MSR_ESC H/L
 #define MSR_GET_CO_STAT		MSR_ESC "\x64"
 
+/*! \namespace lib605
+	\brief MSR605 and 606 Userspace library
+*/
 namespace lib605 {
-
-	//	Class for storing track data
+	/*! \class lib605::Track
+		\brief Track data container
+		This class contains the definition for all of the track data
+		returned from read of a card.
+	*/
 	class Track {
 		public:
-			// Bits per character of this track
+			/*! \enum lib605::Track::TRACK_BIT_LEN
+				The length of each entry
+			*/
 			enum TRACK_BIT_LEN {
-				TRACK_5_BIT,
-				TRACK_7_BIT,
-				TRACK_8_BIT
+				TRACK_5_BIT,	/*!< Data in track is encoded in 5 bits */
+				TRACK_7_BIT,	/*!< Data in track is encoded in 7 bits */
+				TRACK_8_BIT		/*!< Data in track is encoded in 8 bits */
 			};
-			// Bits per inch of the track
+			/*! \enum lib605::Track::TRACK_BPI
+				The number of bits per inch of the track
+			*/
 			enum TRACK_BPI {
-				BPI_210,
-				BPI_75
+				BPI_210,	/*!<  Track has 210 bits per inch */
+				BPI_75		/*!<  Track has  75 bits per inch */
 			};
 		private:
 			// Raw track data
@@ -132,16 +142,22 @@ namespace lib605 {
 			// Track BPC
 			TRACK_BIT_LEN TrackBitLength;
 		public:
-			// Track constructor
+			/*!
+				Construct a new track
+
+				\param data The track information
+				\param data_len The length of the track
+				\param bit_len The density of the track
+			*/
 			Track(unsigned char* data, int data_len, Track::TRACK_BIT_LEN bit_len);
 			// Destructor
 			~Track(void);
 
-			// Returns the raw track data
+			/*! Returns the raw track data */
 			unsigned char* GetTrackData(void);
-			// Returns the size of the data
+			/*! Returns the length of the track data */
 			int GetTrackDataLength(void);
-			// Returns the track BPC
+
 			TRACK_BIT_LEN GetTrackBitLength(void);
 
 			// Allows human-readable output of data
