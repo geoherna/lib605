@@ -79,7 +79,7 @@ namespace lib605 {
 		return out;
 	}
 
-/*	====	START Magstripe CLASS		====	*/
+/*	==== START Magstripe CLASS ====	*/
 
 	// Create a new track
 	// NOTE: Might remove
@@ -178,7 +178,7 @@ namespace lib605 {
 		return out;
 	}
 
-/*	====		START MSR CLASS 		====	*/
+/*	==== START MSR CLASS ====	*/
 
 	// Cycles all the LEDs
 	void MSR::CycleLED(void) noexcept {
