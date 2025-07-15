@@ -1,4 +1,4 @@
-# lib605 [![Build Status](https://travis-ci.org/XAMPP/lib605.svg)](https://travis-ci.org/XAMPP/lib605)
+# lib605
 This is a library for interacting with the MSR605/606 Magnetic Strip Reader/Writer
 
 ## Building
